@@ -2,7 +2,11 @@
   "name": "nabda-core",
   "version": "1.0.0",
   "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
   "dependencies": {
     "sqlite3": "^5.1.7"
   }
 }
+
