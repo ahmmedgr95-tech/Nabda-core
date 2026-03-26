@@ -1,9 +1,14 @@
 const http = require('http');
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 const port = process.env.PORT || 8080;
 
-// تهيئة قاعدة البيانات (نفس القاعدة السابقة)
-const db = new sqlite3.Database('nabda.db');
+// تحديد مسار قاعدة البيانات بشكل آمن
+const dbPath = path.resolve(__dirname, 'nabda.db');
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) console.error('خطأ في فتح القاعدة:', err.message);
+});
+
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -13,6 +18,7 @@ db.serialize(() => {
         date DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 });
+
 
 const server = http.createServer((req, res) => {
     let body = '';
