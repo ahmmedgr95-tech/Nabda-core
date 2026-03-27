@@ -1,4 +1,4 @@
-// ... (إعدادات السيرفر وقاعدة البيانات السابقة تبقى كما هي) ...
+// ... (إعدادات السيرفر وقاعدة البيانات السابقة تبقى كما هي دون تغيير) ...
 
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
     res.end(`
@@ -7,111 +7,104 @@
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>NABDA | المحرك السيادي</title>
+            <title>NABDA | ENGINE</title>
             <style>
-                :root { --bg: #0d1117; --card-bg: #161b22; --accent: #00f2fe; --text-dim: #8b949e; }
-                body { background: var(--bg); color: #c9d1d9; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
+                :root { --bg: #0d1117; --accent: #00f2fe; --card: #161b22; --text: #c9d1d9; }
+                body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
                 
-                .main-ui { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+                /* الواجهة المركزية - لوحة التحكم الفورية */
+                .dashboard { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
                 
-                /* الشعار العلوي */
-                .header-logo { text-align: center; margin-bottom: 40px; }
-                .pulse-icon { width: 60px; height: 60px; border: 2px solid var(--accent); border-radius: 15px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0,242,254,0.1); }
+                .logo-area { text-align: center; margin-bottom: 30px; }
+                .logo-box { width: 50px; height: 50px; border: 2px solid var(--accent); border-radius: 12px; margin: auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(0,242,254,0.1); }
                 
-                /* التبويبات الرئيسية (منطق التفعيل فقط) */
-                .action-tabs { display: flex; background: var(--card-bg); padding: 5px; border-radius: 12px; border: 1px solid #30363d; width: 100%; max-width: 400px; margin-bottom: 20px; }
-                .tab-btn { flex: 1; padding: 12px; border: none; background: none; color: var(--text-dim); cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 14px; transition: 0.3s; }
-                .tab-btn.active { background: var(--accent); color: #0d1117; }
+                /* أزرار المنطق البرمجي (خيارات التفعيل فقط) */
+                .logic-tabs { display: flex; background: var(--card); padding: 4px; border-radius: 10px; border: 1px solid #30363d; width: 100%; max-width: 360px; margin-bottom: 15px; }
+                .logic-btn { flex: 1; padding: 10px; border: none; background: none; color: #8b949e; cursor: pointer; border-radius: 7px; font-weight: bold; font-size: 13px; transition: 0.2s; }
+                .logic-btn.active { background: var(--accent); color: #0d1117; }
 
-                /* صندوق المحرك الرئيسي */
-                .engine-card { background: var(--card-bg); border: 1px solid #30363d; border-radius: 20px; width: 100%; max-width: 400px; padding: 30px; box-sizing: border-box; }
+                /* صندوق الإدخال (The Engine) */
+                .engine-box { background: var(--card); border: 1px solid #30363d; border-radius: 16px; width: 100%; max-width: 360px; padding: 25px; box-sizing: border-box; }
                 
-                input, select { width: 100%; padding: 14px; margin: 10px 0; background: var(--bg); border: 1px solid #30363d; color: white; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-                .submit-pulse { width: 100%; padding: 16px; background: var(--accent); border: none; border-radius: 10px; color: #0d1117; font-weight: bold; font-size: 18px; cursor: pointer; margin-top: 15px; }
+                input, select { width: 100%; padding: 12px; margin: 8px 0; background: var(--bg); border: 1px solid #30363d; color: white; border-radius: 8px; outline: none; box-sizing: border-box; }
+                .exec-btn { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: 8px; color: #0d1117; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
 
-                /* منطقة الشرح (مخفية/صغيرة في الأسفل) */
-                footer { padding: 30px 20px; border-top: 1px solid #30363d; text-align: center; background: #090c10; }
-                .footer-nav { display: flex; justify-content: center; gap: 30px; margin-bottom: 15px; }
-                .secondary-link { color: var(--text-dim); text-decoration: none; font-size: 13px; cursor: pointer; background:none; border:none; border-bottom: 1px solid transparent; }
-                .secondary-link:hover { color: var(--accent); border-bottom: 1px solid var(--accent); }
-                
-                /* النافذة المنبثقة للشرح الهادئ */
-                .info-panel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 450px; background: var(--card-bg); border: 1px solid var(--accent); padding: 30px; border-radius: 20px; z-index: 1000; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
-                .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 999; }
+                /* القبو (Footer) - تذييل الصفحة الهادئ */
+                footer { padding: 15px; border-top: 1px solid #30363d; background: #090c10; display: flex; justify-content: space-between; align-items: center; }
+                .footer-links { display: flex; gap: 15px; }
+                .f-btn { background: none; border: none; color: #58a6ff; font-size: 11px; cursor: pointer; text-decoration: none; padding: 0; }
+                .status-tag { font-family: monospace; font-size: 9px; color: #444; }
+
+                /* النافذة المنبثقة للهوامش */
+                .modal-info { display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 340px; background: #1c2128; border: 1px solid var(--accent); border-radius: 12px; padding: 20px; z-index: 100; box-shadow: 0 -10px 40px rgba(0,0,0,0.6); animation: slideUp 0.3s; }
+                @keyframes slideUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
             </style>
         </head>
         <body>
-            <div class="main-ui">
-                <div class="header-logo">
-                    <div class="pulse-icon"><div style="width:25px; height:2px; background:var(--accent); box-shadow: 0 0 10px var(--accent);"></div></div>
-                    <h1 style="color:white; margin:0; font-size:24px; letter-spacing:2px;">نَـبْـضَـة</h1>
+            <div class="dashboard">
+                <div class="logo-area">
+                    <div class="logo-box"><div style="width:20px; height:1px; background:var(--accent); box-shadow:0 0 10px var(--accent);"></div></div>
+                    <h2 style="margin:10px 0 0 0; letter-spacing:1px; color:white; font-size:20px;">نَـبْـضَـة</h2>
                 </div>
 
-                <div class="action-tabs">
-                    <button class="tab-btn active" onclick="switchMode('personal')">تفعيل فردي</button>
-                    <button class="tab-btn" onclick="switchMode('business')">مؤسسات</button>
+                <div class="logic-tabs">
+                    <button class="logic-btn active" onclick="setLogic('personal')">تفعيل فردي</button>
+                    <button class="logic-btn" onclick="setLogic('business')">تفعيل مؤسسات</button>
                 </div>
 
-                <div class="engine-card">
+                <div class="engine-box">
                     <form action="/" method="POST">
-                        <div id="dynamic-fields">
-                            <label style="color:var(--accent); font-size:10px; font-family:monospace;">> IDENTITY_INPUT</label>
-                            <input type="text" name="name" placeholder="الاسم الرباعي" required>
+                        <div id="logic-fields">
+                            <label style="font-size:9px; color:var(--accent); font-family:monospace;">> USER_NAME</label>
+                            <input type="text" name="name" placeholder="الاسم الكامل" required>
                             
-                            <label style="color:var(--accent); font-size:10px; font-family:monospace;">> CHANNEL_SELECT</label>
+                            <label style="font-size:9px; color:var(--accent); font-family:monospace;">> GATEWAY</label>
                             <select name="service">
                                 <option>مصرف النوران</option>
                                 <option>سداد</option>
                                 <option>موبي كاش</option>
                             </select>
                         </div>
-                        <button type="submit" class="submit-pulse">تفعيل الآن ⚡</button>
+                        <button type="submit" class="exec-btn">تأكيد الارتباط ⚡</button>
                     </form>
                 </div>
             </div>
 
             <footer>
-                <div class="footer-nav">
-                    <button class="secondary-link" onclick="openInfo('why')">لماذا نبضة؟</button>
-                    <button class="secondary-link" onclick="openInfo('about')">لمحة عن المشروع</button>
+                <div class="status-tag">NB-CORE v1.2 // SECURE</div>
+                <div class="footer-links">
+                    <button class="f-btn" onclick="toggleInfo('why')">لماذا نبضة؟</button>
+                    <button class="f-btn" onclick="toggleInfo('about')">لمحة عن المشروع</button>
                 </div>
-                <p style="font-size:10px; color:#555; font-family:monospace;">CORE_ID: NB-2026-LY | GLOBAL_ACCESS</p>
             </footer>
 
-            <div id="overlay" class="overlay" onclick="closeInfo()"></div>
-            <div id="info-panel" class="info-panel">
-                <div id="info-content"></div>
-                <button onclick="closeInfo()" style="margin-top:20px; width:100%; padding:10px; background:#30363d; color:white; border:none; border-radius:8px; cursor:pointer;">فهمت</button>
+            <div id="modal" class="modal-info">
+                <div id="modal-body" style="font-size:13px; line-height:1.5;"></div>
+                <button onclick="this.parentElement.style.display='none'" style="margin-top:15px; width:100%; padding:5px; background:#30363d; color:white; border:none; border-radius:5px; cursor:pointer;">إغلاق</button>
             </div>
 
             <script>
-                function switchMode(mode) {
-                    const btns = document.querySelectorAll('.tab-btn');
+                function setLogic(mode) {
+                    const btns = document.querySelectorAll('.logic-btn');
                     btns.forEach(b => b.classList.remove('active'));
                     event.currentTarget.classList.add('active');
-                    const fields = document.getElementById('dynamic-fields');
+                    const fields = document.getElementById('logic-fields');
                     if(mode === 'business') {
-                        fields.innerHTML = '<label style="color:var(--accent); font-size:10px; font-family:monospace;">> BIZ_NAME</label><input type="text" name="name" placeholder="اسم الشركة / المؤسسة" required><label style="color:var(--accent); font-size:10px; font-family:monospace;">> BIZ_ID</label><input type="text" name="id" placeholder="رقم السجل التجاري" required>';
+                        fields.innerHTML = '<label style="font-size:9px; color:var(--accent); font-family:monospace;">> BIZ_TITLE</label><input type="text" name="name" placeholder="اسم الشركة" required><label style="font-size:9px; color:var(--accent); font-family:monospace;">> REG_NUMBER</label><input type="text" name="id" placeholder="رقم القيد التجاري" required>';
                     } else {
-                        fields.innerHTML = '<label style="color:var(--accent); font-size:10px; font-family:monospace;">> IDENTITY_INPUT</label><input type="text" name="name" placeholder="الاسم الرباعي" required><label style="color:var(--accent); font-size:10px; font-family:monospace;">> CHANNEL_SELECT</label><select name="service"><option>مصرف النوران</option><option>سداد</option><option>موبي كاش</option></select>';
+                        fields.innerHTML = '<label style="font-size:9px; color:var(--accent); font-family:monospace;">> USER_NAME</label><input type="text" name="name" placeholder="الاسم الكامل" required><label style="font-size:9px; color:var(--accent); font-family:monospace;">> GATEWAY</label><select name="service"><option>مصرف النوران</option><option>سداد</option><option>موبي كاش</option></select>';
                     }
                 }
 
-                function openInfo(type) {
-                    const p = document.getElementById('info-panel');
-                    const o = document.getElementById('overlay');
-                    const c = document.getElementById('info-content');
+                function toggleInfo(type) {
+                    const m = document.getElementById('modal');
+                    const b = document.getElementById('modal-body');
+                    m.style.display = 'block';
                     if(type === 'why') {
-                        c.innerHTML = '<h3 style="color:var(--accent)">لماذا نبضة؟</h3><p style="font-size:14px; line-height:1.6;">لأننا نقدم الجيل القادم من التفاعل الرقمي في ليبيا، بتركيز كامل على السرعة والسيادة التقنية للمستخدم.</p>';
+                        b.innerHTML = '<b style="color:var(--accent)">لماذا نبضة؟</b><p>محرك سيادي لتبسيط التحقق المالي الرقمي في السوق الليبي بخصوصية تامة.</p>';
                     } else {
-                        c.innerHTML = '<h3 style="color:var(--accent)">لمحة عن المشروع</h3><p style="font-size:14px; line-height:1.6;">نبضة هو محرك ذكي صُمم ليكون الجسر بين البنوك والمشتركين، بأقل مجهود وأعلى أمان.</p>';
+                        b.innerHTML = '<b style="color:var(--accent)">لمحة</b><p>نظام ذكي يربط بين بياناتك المصرفية واحتياجاتك التقنية بضغطة زر واحدة.</p>';
                     }
-                    p.style.display = 'block'; o.style.display = 'block';
-                }
-
-                function closeInfo() {
-                    document.getElementById('info-panel').style.display = 'none';
-                    document.getElementById('overlay').style.display = 'none';
                 }
             </script>
         </body>
