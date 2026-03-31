@@ -1,8 +1,9 @@
-const path = require('path');
-// أخبر السيرفر أن يستخدم الملفات الموجودة في مجلد public
-app.use(express.static(path.join(__dirname, 'public')));
+// داخل دالة التسجيل في app.js
+const entryFee = 80; // الدفع المبدئي
+const totalTarget = 500; // المحصل النهائي
+const discount = 160; // بروتوكول الخصم
+const netProfit = totalTarget - discount; // صافي الربح (340)
 
-// عند فتح الرابط الرئيسي، أرسل ملف index.html
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// القيمة الصفرية (عند اكتمال 10 رواد)
+const waveTotal = entryFee * 10; // 800
+const zeroValueResult = waveTotal * 10; // 8,000 (بإضافة الصفر)
