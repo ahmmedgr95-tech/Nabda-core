@@ -1,47 +1,81 @@
-// إعدادات الاستراتيجية المالية (الموجة الأولى)
-const STRATEGY = {
-    ENTRY_FEE: 80,          // دفع 80 دينار
-    TARGET_PER_USER: 500,   // المحصل 500
-    DISCOUNT_PROTOCOL: 160, // خصم 160
-    NET_PROFIT: 340,        // صافي 340
-    WAVE_SIZE: 10,          // سعة الموجة 10 رواد
-    ZERO_MULTIPLIER: 10     // معامل القيمة الصفرية
-};
+// قواعد النموذج المرجعي للموجة الأولى في نبضة.
+// هذه الأرقام للحساب المرجعي؛ لا تنشئ وحدها قيود دفتر أو تسوية.
+const STRATEGY = Object.freeze({
+    REFERENCE_CURRENCY: "USD",
+    CONTRIBUTION_PER_USER: 80,
+    WAVE_SIZE: 10,
+    GENERATION_MULTIPLIER: 10,
+    DISTRIBUTION_OBLIGATION_PER_USER: 340,
+    OPERATING_RESERVE_PER_USER: 160
+});
+
+function deriveWaveTotals() {
+    const contributionTotal = STRATEGY.CONTRIBUTION_PER_USER * STRATEGY.WAVE_SIZE;
+    const generatedValue = contributionTotal * STRATEGY.GENERATION_MULTIPLIER;
+    const distributionObligations =
+        STRATEGY.DISTRIBUTION_OBLIGATION_PER_USER * STRATEGY.WAVE_SIZE;
+    const operatingReserve =
+        STRATEGY.OPERATING_RESERVE_PER_USER * STRATEGY.WAVE_SIZE;
+    const treasuryRemainder = generatedValue - distributionObligations;
+    const generativeCreditBase = treasuryRemainder - operatingReserve;
+
+    if (
+        contributionTotal !== 800 ||
+        generatedValue !== 8000 ||
+        distributionObligations !== 3400 ||
+        treasuryRemainder !== 4600 ||
+        operatingReserve !== 1600 ||
+        generativeCreditBase !== 3000
+    ) {
+        throw new Error("NABDA reference wave arithmetic invariant failed");
+    }
+
+    return Object.freeze({
+        contributionTotal,
+        generatedValue,
+        distributionObligations,
+        operatingReserve,
+        treasuryRemainder,
+        generativeCreditBase
+    });
+}
 
 async function processWaveStrategy(currentUserId) {
     try {
-        // 1. حساب عدد الرواد الحاليين في هذه الموجة من قاعدة البيانات
-        const countRes = await pool.query('SELECT COUNT(*) FROM entrepreneurs WHERE status = $1', ['Active']);
-        const currentCount = parseInt(countRes.rows[0].count);
+        // يحسب هذا النموذج عدد المشاركين من مصدر قاعدة البيانات الداخلي.
+        const countRes = await pool.query(
+            "SELECT COUNT(*) FROM entrepreneurs WHERE status = $1",
+            ["Active"]
+        );
+        const currentCount = Number.parseInt(countRes.rows[0].count, 10);
 
-        // 2. تطبيق الحسابات المالية لكل رائد
         const userFinancials = {
-            fee: STRATEGY.ENTRY_FEE,
-            total: STRATEGY.TARGET_PER_USER,
-            discount: STRATEGY.DISCOUNT_PROTOCOL,
-            net: STRATEGY.NET_PROFIT
+            contribution: STRATEGY.CONTRIBUTION_PER_USER,
+            distributionObligation: STRATEGY.DISTRIBUTION_OBLIGATION_PER_USER,
+            operatingReserve: STRATEGY.OPERATING_RESERVE_PER_USER,
+            currency: STRATEGY.REFERENCE_CURRENCY
         };
 
-        console.log(`رائد الأعمال رقم ${currentCount} دخل المنظومة بـ ${userFinancials.fee} د.ل`);
+        console.log(
+            `المشارك رقم ${currentCount} — مساهمة مرجعية: ${userFinancials.contribution} ${STRATEGY.REFERENCE_CURRENCY}`
+        );
 
-        // 3. التحقق: هل وصلنا للرقم 10؟ (إغلاق الموجة)
         if (currentCount >= STRATEGY.WAVE_SIZE) {
-            
-            // حساب القيمة الصفرية للموجة بالكامل
-            const waveTotalInput = STRATEGY.ENTRY_FEE * STRATEGY.WAVE_SIZE; // 800
-            const finalPulseValue = waveTotalInput * STRATEGY.ZERO_MULTIPLIER; // 8,000
+            const waveTotals = deriveWaveTotals();
 
-            console.log("⚠️ تم اكتمال النصاب (10 رواد). تفعيل القيمة الصفرية: 8,000 د.ل");
+            console.log(
+                `اكتملت الموجة: قيمة مولّدة ${waveTotals.generatedValue} ${STRATEGY.REFERENCE_CURRENCY}، والمتبقي ${waveTotals.treasuryRemainder} ${STRATEGY.REFERENCE_CURRENCY}`
+            );
 
-            // 4. تحديث حالة الموجة في قاعدة البيانات
-            await pool.query("UPDATE entrepreneurs SET status = 'Completed' WHERE status = 'Active'");
-            
-            // 5. تفعيل الموجة الثانية مباشرة
-            console.log("🚀 تم إغلاق الموجة الأولى وفتح الموجة الثانية آلياً.");
-            
+            // هذا التحديث التشغيلي لا ينشئ قيدًا ماليًا ولا يثبت تسوية.
+            await pool.query(
+                "UPDATE entrepreneurs SET status = 'Completed' WHERE status = 'Active'"
+            );
+
             return {
                 status: "Wave_Closed",
-                finalValue: finalPulseValue,
+                currency: STRATEGY.REFERENCE_CURRENCY,
+                waveTotals,
                 nextWave: 2
             };
         }
@@ -51,8 +85,8 @@ async function processWaveStrategy(currentUserId) {
             count: currentCount,
             financials: userFinancials
         };
-
     } catch (err) {
         console.error("خطأ في معالجة الاستراتيجية:", err);
+        throw err;
     }
 }
